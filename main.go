@@ -1,32 +1,36 @@
 package main
 
 import (
+	"flag"
 	"io"
 	"log"
-	"math/rand"
 	"net"
 	"sync"
-	"time"
+
+	"github.com/damoye/moproxy/backend"
+	"github.com/damoye/moproxy/config"
 )
 
 var (
-	backends = []string{"127.0.0.1:6379", "127.0.0.1:9221"}
-	r        = rand.New(rand.NewSource(time.Now().Unix()))
+	configPath     = flag.String("config", "", "config file path")
+	backendManager *backend.Manager
 )
-
-func getBackend() string {
-	return backends[r.Intn(len(backends))]
-}
 
 func handleConnection(frontConn net.Conn) {
 	defer frontConn.Close()
-	backend := getBackend()
-	backConn, err := net.Dial("tcp", backend)
+	backend := backendManager.Get()
+	if backend == nil {
+		log.Print("no backends")
+		return
+	}
+	defer backend.Decr()
+	backConn, err := net.Dial("tcp", backend.Address)
 	if err != nil {
 		log.Println("dial:", err)
 		return
 	}
 	defer backConn.Close()
+	log.Printf("FRONTEND: %s, BACKEND: %s", frontConn.RemoteAddr(), backConn.RemoteAddr())
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	go func() {
@@ -47,7 +51,12 @@ func handleConnection(frontConn net.Conn) {
 }
 
 func main() {
-	ln, err := net.Listen("tcp", ":8080")
+	config, err := config.GenerateConfig(*configPath)
+	if err != nil {
+		panic(err)
+	}
+	backendManager = backend.NewManager(config.Backends)
+	ln, err := net.Listen("tcp", config.Address)
 	if err != nil {
 		panic(err)
 	}

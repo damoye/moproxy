@@ -14,10 +14,10 @@ type Config struct {
 }
 
 var defaultConfig = Config{
-	Address:  ":8080",
+	Address: ":8080",
 	Backends: []string{
-	// 		"127.0.0.1:6379",
-	// 		"127.0.0.1:9221",
+		"127.0.0.1:6379",
+		"127.0.0.1:9221",
 	},
 }
 

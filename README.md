@@ -1,2 +1,2 @@
 # moproxy
-Proxy by Go
+TCP Proxy written by Go.

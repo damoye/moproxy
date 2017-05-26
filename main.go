@@ -39,7 +39,7 @@ func handleConnection(frontConn *net.TCPConn) {
 		log.Print("no backends")
 		return
 	}
-	defer backend.Decr()
+	defer backend.DcreCount()
 	temp, err := net.Dial("tcp", backend.Address)
 	if err != nil {
 		log.Println("dial:", err)
@@ -66,6 +66,7 @@ func main() {
 		panic(err)
 	}
 	backendManager = backend.NewManager(config.Backends)
+	go serveHTTP(config.HTTPAddress, backendManager)
 	temp, err := net.Listen("tcp", config.Address)
 	ln := temp.(*net.TCPListener)
 	if err != nil {

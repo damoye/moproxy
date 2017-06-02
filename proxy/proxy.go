@@ -2,10 +2,10 @@ package proxy
 
 import (
 	"io"
-	"log"
 	"net"
 	"sync"
 
+	"github.com/damoye/llog"
 	"github.com/damoye/moproxy/backend"
 	"github.com/damoye/moproxy/config"
 )
@@ -29,58 +29,58 @@ func (proxy *Proxy) Run() {
 	go proxy.serveHTTP()
 	temp, err := net.Listen("tcp", proxy.config.Address)
 	if err != nil {
-		log.Fatalln("FATAL: listen:", err)
+		panic(err)
 	}
 	ln := temp.(*net.TCPListener)
 	for {
 		conn, err := ln.AcceptTCP()
 		if err != nil {
-			log.Fatalln("FATAL: acceptTCP:", err)
+			panic(err)
 		}
 		go proxy.handleConnection(conn)
 	}
 }
 
-func (proxy *Proxy) handleConnection(frontConn *net.TCPConn) {
+func (proxy *Proxy) handleConnection(clientConn *net.TCPConn) {
 	defer func() {
-		if err := frontConn.Close(); err != nil {
-			log.Println("ERROR: frontConn close:", err)
+		if err := clientConn.Close(); err != nil {
+			llog.Error(err)
 		}
 	}()
 	backend := proxy.manager.Get()
 	if backend == nil {
-		log.Print("ERROR: no backends")
+		llog.Error("no backends")
 		return
 	}
 	defer backend.DcreCount()
 	temp, err := net.Dial("tcp", backend.Address)
 	if err != nil {
-		log.Println("ERROR: dial:", err)
+		llog.Error(err)
 		return
 	}
-	backConn := temp.(*net.TCPConn)
+	serverConn := temp.(*net.TCPConn)
 	defer func() {
-		if err := backConn.Close(); err != nil {
-			log.Println("ERROR: backConn close:", err)
+		if err := serverConn.Close(); err != nil {
+			llog.Error(err)
 		}
 	}()
-	log.Printf("INFO: frontend: %s, backend: %s", frontConn.RemoteAddr(), backConn.RemoteAddr())
+	llog.Info(clientConn.RemoteAddr(), " <-> ", serverConn.RemoteAddr())
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-	go pipe(backConn, frontConn, &wg)
-	go pipe(frontConn, backConn, &wg)
+	go pipe(serverConn, clientConn, &wg)
+	go pipe(clientConn, serverConn, &wg)
 	wg.Wait()
-	log.Printf("INFO: frontend: %s ended", frontConn.RemoteAddr())
+	llog.Info(clientConn.RemoteAddr(), " </> ", serverConn.RemoteAddr())
 }
 
 func pipe(dst *net.TCPConn, src *net.TCPConn, wg *sync.WaitGroup) {
 	defer wg.Done()
 	_, err := io.Copy(dst, src)
 	if err != nil {
-		log.Println("ERROR: copy:", err)
+		llog.Error(err)
 	}
 	err = dst.CloseWrite()
 	if err != nil {
-		log.Println("ERROR: closeWrite:", err)
+		llog.Error(err)
 	}
 }

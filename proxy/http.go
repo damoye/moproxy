@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 )
 
@@ -36,5 +35,5 @@ func (proxy *Proxy) postBackend(w http.ResponseWriter, r *http.Request) {
 func (proxy *Proxy) serveHTTP() {
 	http.HandleFunc("/", proxy.index)
 	http.HandleFunc("/backend", proxy.postBackend)
-	log.Fatal(http.ListenAndServe(proxy.config.HTTPAddress, nil))
+	panic(http.ListenAndServe(proxy.config.HTTPAddress, nil))
 }

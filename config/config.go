@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
-	"log"
 )
 
 // Config ...
@@ -15,10 +14,10 @@ type Config struct {
 }
 
 var defaultConfig = Config{
-	Address:  ":8080",
+	Address: ":8080",
 	Backends: []string{
-	// "127.0.0.1:6379",
-	// "127.0.0.1:9221",
+		"127.0.0.1:6379",
+		"127.0.0.1:9221",
 	},
 	HTTPAddress: ":8081",
 }
@@ -27,7 +26,6 @@ var defaultConfig = Config{
 func GenerateConfig(configPath string) (*Config, error) {
 	flag.Parse()
 	if configPath == "" {
-		log.Print("use default config")
 		return &defaultConfig, nil
 	}
 	b, err := ioutil.ReadFile(configPath)

@@ -44,7 +44,7 @@ func (proxy *Proxy) Run() {
 func (proxy *Proxy) handleConnection(clientConn *net.TCPConn) {
 	defer func() {
 		if err := clientConn.Close(); err != nil {
-			llog.Error(err)
+			llog.Error("close client connection: ", err)
 		}
 	}()
 	backend := proxy.manager.Get()
@@ -55,32 +55,32 @@ func (proxy *Proxy) handleConnection(clientConn *net.TCPConn) {
 	defer backend.DcreCount()
 	temp, err := net.Dial("tcp", backend.Address)
 	if err != nil {
-		llog.Error(err)
+		llog.Error("dial backend: ", err)
 		return
 	}
 	serverConn := temp.(*net.TCPConn)
 	defer func() {
 		if err := serverConn.Close(); err != nil {
-			llog.Error(err)
+			llog.Error("close server connection: ", err)
 		}
 	}()
-	llog.Info(clientConn.RemoteAddr(), " <-> ", serverConn.RemoteAddr())
+	llog.Info("connected ", clientConn.RemoteAddr(), " to ", serverConn.RemoteAddr())
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	go pipe(serverConn, clientConn, &wg)
 	go pipe(clientConn, serverConn, &wg)
 	wg.Wait()
-	llog.Info(clientConn.RemoteAddr(), " </> ", serverConn.RemoteAddr())
+	llog.Info("disconnected ", clientConn.RemoteAddr(), " to ", serverConn.RemoteAddr())
 }
 
 func pipe(dst *net.TCPConn, src *net.TCPConn, wg *sync.WaitGroup) {
 	defer wg.Done()
 	_, err := io.Copy(dst, src)
 	if err != nil {
-		llog.Error(err)
+		llog.Error("copy: ", err)
 	}
 	err = dst.CloseWrite()
 	if err != nil {
-		llog.Error(err)
+		llog.Error("close write", err)
 	}
 }

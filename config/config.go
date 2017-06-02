@@ -16,8 +16,9 @@ type Config struct {
 var defaultConfig = Config{
 	Address: ":8080",
 	Backends: []string{
-		"127.0.0.1:6379",
-		"127.0.0.1:9221",
+		"www.baidu.com:80",
+		// "127.0.0.1:6379",
+		// "127.0.0.1:9221",
 	},
 	HTTPAddress: ":8081",
 }

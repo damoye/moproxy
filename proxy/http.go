@@ -20,7 +20,6 @@ func (proxy *Proxy) postBackend(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	defer r.Body.Close()
 	var body struct {
 		Address string `json:"address"`
 	}

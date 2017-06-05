@@ -15,7 +15,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	b, _ := json.Marshal(config)
+	b, err := json.Marshal(config)
+	if err != nil {
+		panic(err)
+	}
 	llog.Info("config: ", string(b))
 	proxy := proxy.New(config)
 	proxy.Run()

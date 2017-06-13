@@ -11,7 +11,7 @@ func (proxy *Proxy) index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := w.Write(proxy.manager.Describe()); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
